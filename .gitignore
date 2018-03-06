@@ -43,3 +43,4 @@ yarn-error.log
 Thumbs.db
 src/environments/environment.prod.ts
 src/environments/environment.ts
+config-firebase.json
