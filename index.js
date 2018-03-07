@@ -36,11 +36,6 @@ admin.initializeApp({
     databaseURL: DATABASE_URL
 });
 
-console.log('PROJECT_ID:' + PROJECT_ID);
-console.log('CLIENT_EMAIL:' + CLIENT_EMAIL);
-console.log('PRIVATE_KEY:' + PRIVATE_KEY);
-console.log('DATABASE_URL:' + DATABASE_URL);
-
 var db = admin.database();
 
 let serverRef = db.ref('server');
@@ -79,18 +74,29 @@ app.get('/player/:id', function(req, res, next) {
   let url = 'https://www.erepublik.com/br/citizen/profile/' + id;
   request(url, function (error, response, body) {
       if (!error && response.statusCode === 200) {
-          const $ = cheerio.load(body);
+        const $ = cheerio.load(body);
 
-          $('img.citizen_avatar').each(function(i, element) {
-            const player = $(this).attr('alt');
-            res.send(player);
+        $('img.citizen_avatar').each(function(i, element) {
+          const name = $(this).attr('alt');
+
+          $('#achievment').find('li').each(function(i, element) {
+            let medal = $(this).children('img').attr('alt');
+            if (medal === 'resistance hero') {
+              let resistanceHero = $(this).children('.counter').text();
+              if (!resistanceHero) {
+                resistanceHero = 0;
+              }
+              return res.json({
+                "name": name,
+                "resistance_hero": resistanceHero
+              });
+            }
           });
 
+        });
+
       } else {
-        if (response.statusCode === 404) {
-          res.send('Jogador não encontrado');
-        }
-        console.log(error);
+        return res.json({});
       }
   });
 });
@@ -106,4 +112,4 @@ console.log('ping url: ' + ping);
 
 setInterval(function() {
   http.get(ping);
-}, 60000);
+}, 300000);
