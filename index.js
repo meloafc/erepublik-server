@@ -1,7 +1,9 @@
 const admin = require('firebase-admin');
 
+let configErepublikDeutschland;
 let configFirebase;
 
+let EREPUBLIK_DEUTSCHLAND_KEY;
 let PROJECT_ID;
 let CLIENT_EMAIL;
 let PRIVATE_KEY;
@@ -9,38 +11,43 @@ let DATABASE_URL;
 
 let configFileExist = false;
 try {
-    configFirebase = require('./config-firebase.json');
-    configFileExist = true;
+  configErepublikDeutschland = require('./config-erepublik-deutschland.json');
+  configFirebase = require('./config-firebase.json');
+  configFileExist = true;
 } catch (ex) {
-    console.log('No config file found.');
+  console.log('No config file found.');
 }
 
-if(configFileExist) {
-    PROJECT_ID = configFirebase.project_id;
-    CLIENT_EMAIL = configFirebase.client_email;
-    PRIVATE_KEY = configFirebase.private_key;
-    DATABASE_URL = configFirebase.database_url;
+if (configFileExist) {
+  EREPUBLIK_DEUTSCHLAND_KEY = configErepublikDeutschland.api_key;
+  PROJECT_ID = configFirebase.project_id;
+  CLIENT_EMAIL = configFirebase.client_email;
+  PRIVATE_KEY = configFirebase.private_key;
+  DATABASE_URL = configFirebase.database_url;
 } else {
-    PROJECT_ID = process.env.PROJECT_ID;
-    CLIENT_EMAIL = process.env.CLIENT_EMAIL;
-    PRIVATE_KEY = JSON.parse(process.env.PRIVATE_KEY);
-    DATABASE_URL = process.env.DATABASE_URL;
+  EREPUBLIK_DEUTSCHLAND_KEY = process.env.EREPUBLIK_DEUTSCHLAND_KEY;
+  PROJECT_ID = process.env.PROJECT_ID;
+  CLIENT_EMAIL = process.env.CLIENT_EMAIL;
+  PRIVATE_KEY = JSON.parse(process.env.PRIVATE_KEY);
+  DATABASE_URL = process.env.DATABASE_URL;
 }
 
 admin.initializeApp({
-    credential: admin.credential.cert({
-        projectId: PROJECT_ID,
-        clientEmail: CLIENT_EMAIL,
-        privateKey: PRIVATE_KEY
-    }),
-    databaseURL: DATABASE_URL
+  credential: admin.credential.cert({
+    projectId: PROJECT_ID,
+    clientEmail: CLIENT_EMAIL,
+    privateKey: PRIVATE_KEY
+  }),
+  databaseURL: DATABASE_URL
 });
 
 var db = admin.database();
 
+const EREPUBLIK_DEUTSCHLAND_API = 'https://api.erepublik-deutschland.de/' + EREPUBLIK_DEUTSCHLAND_KEY;
+
 let serverRef = db.ref('server');
 serverRef.update({
-  start : admin.database.ServerValue.TIMESTAMP
+  start: admin.database.ServerValue.TIMESTAMP
 });
 
 var request = require('request');
@@ -56,48 +63,48 @@ app.get('/', function (req, res) {
 
 app.get('/ping', function (req, res) {
   let ref = db.ref('server/ping');
-  ref.transaction(function(currentCounter) {
-      return (currentCounter || 0) + 1;
+  ref.transaction(function (currentCounter) {
+    return (currentCounter || 0) + 1;
   });
   res.send('pong');
 });
 
 app.get('/log', function (req, res) {
-  db.ref('server').once("value", function(snap) {
+  db.ref('server').once("value", function (snap) {
     res.send(snap);
   });
 });
 
-app.get('/player/:id', function(req, res, next) {
+app.get('/player/:id', function (req, res, next) {
   let id = req.params.id;
 
   let url = 'https://www.erepublik.com/br/citizen/profile/' + id;
   request(url, function (error, response, body) {
-      if (!error && response.statusCode === 200) {
-        const $ = cheerio.load(body);
+    if (!error && response.statusCode === 200) {
+      const $ = cheerio.load(body);
 
-        $('img.citizen_avatar').each(function(i, element) {
-          const name = $(this).attr('alt');
+      $('img.citizen_avatar').each(function (i, element) {
+        const name = $(this).attr('alt');
 
-          $('#achievment').find('li').each(function(i, element) {
-            let medal = $(this).children('img').attr('alt');
-            if (medal === 'resistance hero') {
-              let resistanceHero = $(this).children('.counter').text();
-              if (!resistanceHero) {
-                resistanceHero = 0;
-              }
-              return res.json({
-                "name": name,
-                "resistance_hero": resistanceHero
-              });
+        $('#achievment').find('li').each(function (i, element) {
+          let medal = $(this).children('img').attr('alt');
+          if (medal === 'resistance hero') {
+            let resistanceHero = $(this).children('.counter').text();
+            if (!resistanceHero) {
+              resistanceHero = 0;
             }
-          });
-
+            return res.json({
+              "name": name,
+              "resistance_hero": resistanceHero
+            });
+          }
         });
 
-      } else {
-        return res.json({});
-      }
+      });
+
+    } else {
+      return res.json({});
+    }
   });
 });
 
@@ -110,6 +117,24 @@ var ping = process.env.PING || 'http://localhost:4200/ping';
 
 console.log('ping url: ' + ping);
 
-setInterval(function() {
+setInterval(function () {
   http.get(ping);
 }, 300000);
+
+request({
+  url: EREPUBLIK_DEUTSCHLAND_API + '/battles/active',
+  json: true
+}, function (error, response, body) {
+
+  if (!error && response.statusCode === 200) {
+    for (const i in body.active) {
+      // console.log(i + ' = ' + body.active[i].general.type + ' | ' + body.active[i].region.name);
+      region = 'Dublin';
+      if (body.active[i].region.name === region) {
+        console.log(body.active[i]);
+      }
+    }
+    // console.log(body.active) // Print the json response
+  }
+
+})
