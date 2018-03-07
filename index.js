@@ -36,6 +36,11 @@ admin.initializeApp({
     databaseURL: DATABASE_URL
 });
 
+console.log('PROJECT_ID:' + PROJECT_ID);
+console.log('CLIENT_EMAIL:' + CLIENT_EMAIL);
+console.log('PRIVATE_KEY:' + PRIVATE_KEY);
+console.log('DATABASE_URL:' + DATABASE_URL);
+
 var db = admin.database();
 
 let serverRef = db.ref('server');
@@ -96,6 +101,8 @@ app.listen(app.get('port'), function () {
 
 var http = require("http");
 var ping = process.env.PING || 'http://localhost:4200/ping';
+
+console.log('ping url: ' + ping);
 
 setInterval(function() {
   http.get(ping);
