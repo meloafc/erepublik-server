@@ -55,7 +55,7 @@ var cheerio = require('cheerio');
 var express = require('express');
 
 var app = express();
-app.set('port', process.env.PORT || 4200);
+app.set('port', process.env.PORT || 5000);
 
 require('./routes/server.routes.js')(app);
 
@@ -115,7 +115,7 @@ app.listen(app.get('port'), function () {
 });
 
 var http = require("http");
-var ping = process.env.PING || 'http://localhost:4200/ping';
+var ping = process.env.PING || 'http://localhost:5000/ping';
 
 console.log('ping url: ' + ping);
 
@@ -168,3 +168,53 @@ countries = function() {
   
   })
 }
+
+players = function() {
+  request({
+    url: EREPUBLIK_DEUTSCHLAND_API + '/players/details/2',
+    json: true
+  }, function (error, response, body) {
+  
+    if (!error && response.statusCode === 200) {
+      for (const i in body.players) {
+        console.log(body.players[i].name + ' | ' + body.players[i].general.lastupdate);
+        
+        let tempRef = db.ref('temp');
+        tempRef.push({
+          time: admin.database.ServerValue.TIMESTAMP,
+          player: body.players[i].name,
+          lastupdate: body.players[i].general.lastupdate
+        });
+      }
+    }
+  
+  })
+}
+
+var moment = require('moment');
+
+app.get('/temp', function (req, res) {
+  db.ref('temp').once("value", function (snapshot) {
+
+    const retorno = []
+
+    snapshot.forEach(object => {
+      const serverTime = moment(object.val().time).fromNow();
+
+      retorno.push({
+        lastupdate: object.val().lastupdate,
+        player: object.val().player,
+        serverTime: serverTime,
+      });
+    });
+
+    res.send(retorno);
+  });
+});
+
+var CronJob = require('cron').CronJob;
+new CronJob('0 0,10,20,30,40,50 * * * *', function() {
+  console.log('-------------------');
+  console.log(moment().format());
+  players();
+}, null, true, 'America/Manaus');
