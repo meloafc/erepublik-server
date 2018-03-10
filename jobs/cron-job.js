@@ -1,4 +1,4 @@
-module.exports = function () {
+module.exports = function (db) {
 
   const moment = require('moment');
   const CronJob = require('cron').CronJob;
@@ -10,6 +10,11 @@ module.exports = function () {
   new CronJob('0 * * * * *', function () {
     console.log(moment().format());
     http.get(pingUrl);
+  }, null, true, 'America/Manaus');
+
+  const player = require('../controllers/player.controller.js')(db);
+  new CronJob('0 * * * * *', function () {
+    player.update();
   }, null, true, 'America/Manaus');
 
 }

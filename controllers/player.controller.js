@@ -1,35 +1,66 @@
-/*
+module.exports = function (db) {
+    var module = {};
 
-app.get('/player/:id', function (req, res, next) {
-    let id = req.params.id;
+    const admin = require('firebase-admin');
+    const moment = require('moment');
+    const Crawler = require("crawler");
 
-    let url = 'https://www.erepublik.com/br/citizen/profile/' + id;
-    request(url, function (error, response, body) {
-        if (!error && response.statusCode === 200) {
-            const $ = cheerio.load(body);
+    module.update = function () {
+        console.log('iniciando update.');
 
-            $('img.citizen_avatar').each(function (i, element) {
-                const name = $(this).attr('alt');
+        const newRef = db.ref('team_players_rh_hour').push();
+        newRef.update({ startJob: admin.database.ServerValue.TIMESTAMP });
 
-                $('#achievment').find('li').each(function (i, element) {
-                    let medal = $(this).children('img').attr('alt');
-                    if (medal === 'resistance hero') {
-                        let resistanceHero = $(this).children('.counter').text();
-                        if (!resistanceHero) {
-                            resistanceHero = 0;
-                        }
-                        return res.json({
-                            "name": name,
-                            "resistance_hero": resistanceHero
+        var crawler = new Crawler({
+            //rateLimit: 1000,
+            callback: function (error, res, done) {
+                if (error) {
+                    console.log(error);
+                } else {
+                    const $ = res.$;
+
+                    const fields = res.request.uri.href.split('/');
+                    const id = fields[fields.length-1];
+
+                    $('img.citizen_avatar').each(function (i, element) {
+                        const name = $(this).attr('alt');
+
+                        $('#achievment').find('li').each(function (i, element) {
+                            let medal = $(this).children('img').attr('alt');
+                            if (medal === 'resistance hero') {
+                                let resistanceHero = $(this).children('.counter').text();
+                                if (!resistanceHero) {
+                                    resistanceHero = 0;
+                                }
+                                newRef.child('players/' + id).update({
+                                    name: name,
+                                    resistanceHero: resistanceHero,
+                                    time: admin.database.ServerValue.TIMESTAMP
+                                });
+                            }
                         });
-                    }
-                });
 
+                    });
+                }
+                done();
+            }
+        });
+
+        crawler.on('drain', function () {
+            newRef.update({ endJob: admin.database.ServerValue.TIMESTAMP });
+            console.log('finalizando update.');
+        });
+
+        db.ref('players').once('value').then(snapshot => {
+
+            snapshot.forEach(player => {
+                crawler.queue('https://www.erepublik.com/br/citizen/profile/' + player.key);
             });
 
-        } else {
-            return res.json({});
-        }
-    });
-});
-/*
+        }).catch(err => {
+            console.log('Error getting documents', err);
+        });
+    };
+
+    return module;
+}
