@@ -13,7 +13,7 @@ module.exports = function (db) {
   }, null, true, 'America/Manaus');
 
   const player = require('../controllers/player.controller.js')(db);
-  new CronJob('0 * * * * *', function () {
+  new CronJob('0 0 * * * *', function () {
     player.update();
   }, null, true, 'America/Manaus');
 
