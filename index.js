@@ -57,25 +57,7 @@ var express = require('express');
 var app = express();
 app.set('port', process.env.PORT || 5000);
 
-require('./routes/server.routes.js')(app);
-
-app.get('/', function (req, res) {
-  res.send('ONLINE');
-});
-
-app.get('/ping', function (req, res) {
-  let ref = db.ref('server/ping');
-  ref.transaction(function (currentCounter) {
-    return (currentCounter || 0) + 1;
-  });
-  res.send('pong');
-});
-
-app.get('/log', function (req, res) {
-  db.ref('server').once("value", function (snap) {
-    res.send(snap);
-  });
-});
+require('./routes/server.routes.js')(app, db);
 
 app.get('/player/:id', function (req, res, next) {
   let id = req.params.id;
@@ -115,7 +97,7 @@ app.listen(app.get('port'), function () {
 });
 
 var http = require("http");
-var ping = process.env.PING || 'http://localhost:5000/ping';
+var ping = process.env.PING || 'http://localhost:5000/server/ping';
 
 console.log('ping url: ' + ping);
 
