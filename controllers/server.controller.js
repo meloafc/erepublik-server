@@ -25,7 +25,11 @@ module.exports = function (db) {
             const retorno = []
 
             snapshot.forEach(object => {
-                const start = moment(object.val().start).fromNow();
+                const start = moment(object.val().start).format("DD/MM/YYYY HH:mm:ss");
+                let lastupdate = '-';
+                if(object.val().lastupdate) {
+                    lastupdate = moment(object.val().lastupdate).format("DD/MM/YYYY HH:mm:ss");
+                }
                 let duration = object.val().lastupdate - object.val().start;
                 if(!duration) {
                     duration = 0;
@@ -33,10 +37,15 @@ module.exports = function (db) {
                 duration = moment.utc(duration).format("HH:mm:ss");
 
                 retorno.push({
-                    lastupdate: object.val().lastupdate,
+                    startTime: object.val().start,
                     start: start,
+                    lastupdate: lastupdate,
                     duration: duration
                 });
+            });
+
+            retorno.sort(function(a, b) {
+                return b.startTime - a.startTime;
             });
 
             res.send(retorno);
