@@ -50,8 +50,10 @@ serverRef.push({
   start: admin.database.ServerValue.TIMESTAMP
 });
 
+var cors = require('cors');
 var express = require('express');
 var app = express();
+app.use(cors());
 app.set('port', process.env.PORT || 5000);
 
 require('./routes/server.routes.js')(app, db);
