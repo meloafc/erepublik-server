@@ -50,14 +50,12 @@ serverRef.push({
   start: admin.database.ServerValue.TIMESTAMP
 });
 
-var request = require('request');
-var cheerio = require('cheerio');
 var express = require('express');
-
 var app = express();
 app.set('port', process.env.PORT || 5000);
 
 require('./routes/server.routes.js')(app, db);
+require('./routes/player.routes.js')(app, db);
 
 app.listen(app.get('port'), function () {
   console.log('App is listening on port ' + app.get('port'));
