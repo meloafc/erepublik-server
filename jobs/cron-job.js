@@ -7,6 +7,12 @@ module.exports = function (db) {
   const pingUrl = process.env.PING || 'http://localhost:5000/server/ping';
   console.log('ping url: ' + pingUrl);
 
+  db.ref("/.info/serverTimeOffset").on('value', function(offset) {
+    var offsetVal = offset.val() || 0;
+    var serverTime = Date.now() + offsetVal;
+    console.log('Servidor firebase time: ' + tempo.converterTimeParaManaus(serverTime));
+  });
+
   new CronJob('0 * * * * *', function () {
     console.log(tempo.getDataHoraAtualManaus());
     http.get(pingUrl);

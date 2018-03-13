@@ -9,5 +9,9 @@ module.exports = function () {
     return moment().tz(module.ZONE_MANAUS).format();
   };
 
+  module.converterTimeParaManaus = function (time) {
+    return moment.tz(time, module.ZONE_MANAUS).format();
+  };
+
   return module;
 }
