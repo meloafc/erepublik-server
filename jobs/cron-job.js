@@ -1,5 +1,6 @@
 module.exports = function (db) {
 
+  const job = require('../models/job.js')();
   const tempo = require('../utils/tempo.js')();
   const CronJob = require('cron').CronJob;
   const http = require("http");
@@ -12,7 +13,7 @@ module.exports = function (db) {
     var serverTime = Date.now() + offsetVal;
     console.log('Servidor firebase time: ' + tempo.converterTimeParaManaus(serverTime));
   });
-
+  
   new CronJob('0 * * * * *', function () {
     console.log(tempo.getDataHoraAtualManaus());
     http.get(pingUrl);
