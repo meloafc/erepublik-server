@@ -24,4 +24,7 @@ module.exports = function (db) {
     player.update();
   }, null, true, tempo.ZONE_MANAUS);
 
+  const team = require('../controllers/team.controller.js')(db);
+  team.getTeamPlayers('29ª Equipe');
+
 }
