@@ -16,6 +16,16 @@ module.exports = function (db) {
         });
     };
 
+    module.salvarJogadores = function (req, res) {
+        const timeId = req.body.timeId;
+        const listaJogadores = req.body.listaJogadores;
+        team.salvarJogadores(timeId, listaJogadores).then(resultado => {
+            res.send(resultado);
+        }).catch(error => {
+            res.send(error);
+        });
+    };
+
     module.contabilizarTimeAtivo = function () {
         return new Promise(function (resolve, reject) {
 

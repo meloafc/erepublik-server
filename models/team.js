@@ -38,5 +38,48 @@ module.exports = function (db) {
         });
     };
 
+    module.salvarJogadores = function (timeId, listaJogadores) {
+        return new Promise(function (resolve, reject) {
+
+            db.ref('v2/teams/' + timeId).once("value", function (snapshot) {
+                const team = snapshot.val();
+                if (team) {
+                    let promises = [];
+                    for(const i in listaJogadores) {
+                        promises.push(module.salvarJogador(timeId, listaJogadores[i]));
+                    }
+                    Promise.all(promises).then(() => {
+                        resolve(snapshot);
+                    }).catch(error => {
+                        reject(error);
+                    });
+                } else {
+                    reject('Time não encontrado!');
+                }
+            }, function(error) {
+                reject(error);
+            });
+
+        });
+    };
+
+    module.salvarJogador = function (timeId, jogador) {
+        return new Promise(function (resolve, reject) {
+
+            const url = 'v2/team_players/' + timeId + '/players/' + jogador.id;
+            console.log(url);
+            db.ref(url).set(jogador.name).then(value => {
+                db.ref(url).once("value", function (snapshot) {
+                    resolve(snapshot.val());
+                }, function(error) {
+                    reject(error);
+                });
+            }).catch(error => {
+                reject(error);
+            });
+
+        });
+    };
+
     return module;
 }
