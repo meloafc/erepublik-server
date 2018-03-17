@@ -19,12 +19,9 @@ module.exports = function (db) {
     http.get(pingUrl);
   }, null, true, tempo.ZONE_MANAUS);
 
-  const player = require('../controllers/player.controller.js')(db);
-  new CronJob('0 0 * * * *', function () {
-    player.update();
-  }, null, true, tempo.ZONE_MANAUS);
-
   const team = require('../controllers/team.controller.js')(db);
-  team.getTeamPlayers('29ª Equipe');
+  new CronJob('0 0 * * * *', function () {
+    team.contabilizarTimeAtivo();
+  }, null, true, tempo.ZONE_MANAUS);
 
 }

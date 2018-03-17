@@ -7,6 +7,45 @@ module.exports = function (db) {
     const request = require('request');
     const cheerio = require('cheerio');
 
+    function Player(id, name, resistanceHero, lastUpdate) {
+        this.id = id;
+        this.name = name;
+        this.resistanceHero = resistanceHero;
+        this.lastUpdate = lastUpdate;
+    }
+
+    module.extrairJogadorDoHTML = function (res) {
+        return new Promise(function (resolve, reject) {
+            const $ = res.$;
+
+            const fields = res.request.uri.href.split('/');
+            const id = fields[fields.length - 1];
+
+            var contador = 0;
+
+            $('img.citizen_avatar').each(function (i, element) {
+                const name = $(this).attr('alt');
+
+                $('#achievment').find('li').each(function (i, element, array) {
+                    let medal = $(this).children('img').attr('alt');
+                    if (medal === 'resistance hero') {
+                        let resistanceHero = $(this).children('.counter').text();
+                        if (!resistanceHero) {
+                            resistanceHero = 0;
+                        }
+
+                        resolve(new Player(id, name, resistanceHero));
+
+                        contador++;
+                        if (contador === array.length) {
+                            reject();
+                        }
+                    }
+                });
+            });
+        });
+    };
+
     module.get = function (req, res) {
         let id = req.params.id;
 
@@ -41,60 +80,66 @@ module.exports = function (db) {
         });
     };
 
-    module.update = function () {
-        console.log('iniciando update.');
+    module.getEstadoAtualDosJogadores = function (listaId) {
+        return new Promise(function (resolve, reject) {
 
-        const newRef = db.ref('team_players_rh_hour').push();
-        newRef.update({ startJob: admin.database.ServerValue.TIMESTAMP });
-
-        var crawler = new Crawler({
-            //rateLimit: 1000,
-            callback: function (error, res, done) {
-                if (error) {
-                    console.log(error);
-                } else {
-                    const $ = res.$;
-
-                    const fields = res.request.uri.href.split('/');
-                    const id = fields[fields.length-1];
-
-                    $('img.citizen_avatar').each(function (i, element) {
-                        const name = $(this).attr('alt');
-
-                        $('#achievment').find('li').each(function (i, element) {
-                            let medal = $(this).children('img').attr('alt');
-                            if (medal === 'resistance hero') {
-                                let resistanceHero = $(this).children('.counter').text();
-                                if (!resistanceHero) {
-                                    resistanceHero = 0;
-                                }
-                                newRef.child('players/' + id).update({
-                                    name: name,
-                                    resistanceHero: resistanceHero,
-                                    time: admin.database.ServerValue.TIMESTAMP
-                                });
-                            }
+            let lista = [];
+            const crawler = new Crawler({
+                callback: function (error, res, done) {
+                    if (error) {
+                        console.log(error);
+                        done();
+                    } else {
+                        module.extrairJogadorDoHTML(res).then(player => {
+                            module.salvarJogador(player).then(playerSaved => {
+                                lista.push(playerSaved);
+                                done();
+                            }).catch(error => {
+                                console.log(error);
+                                done();
+                            });
+                        }).catch(error => {
+                            console.log(error);
+                            done();
                         });
-
-                    });
+                    }
                 }
-                done();
-            }
-        });
-
-        crawler.on('drain', function () {
-            newRef.update({ endJob: admin.database.ServerValue.TIMESTAMP });
-            console.log('finalizando update.');
-        });
-
-        db.ref('players').once('value').then(snapshot => {
-
-            snapshot.forEach(player => {
-                crawler.queue('https://www.erepublik.com/br/citizen/profile/' + player.key);
             });
 
-        }).catch(err => {
-            console.log('Error getting documents', err);
+            listaId.forEach(id => {
+                crawler.queue('https://www.erepublik.com/br/citizen/profile/' + id);
+            });
+
+            crawler.on('drain', function () {
+                resolve(lista);
+            });
+
+        });
+    };
+
+    module.salvarJogador = function (player) {
+        return new Promise(function (resolve, reject) {
+
+            let newRef =  db.ref('player_history/' + player.id).push();
+            newRef.set({
+                name: player.name,
+                resistanceHero: player.resistanceHero,
+                lastUpdate: admin.database.ServerValue.TIMESTAMP
+            }).then(value => {
+                newRef.once("value", function (snapshot) {
+                    resolve(new Player(
+                        snapshot.key,
+                        snapshot.val().name,
+                        snapshot.val().resistanceHero,
+                        snapshot.val().lastUpdate
+                    ));
+                }, function(error) {
+                    reject(error);
+                });
+            }).catch(error => {
+                reject(error);
+            });
+
         });
     };
 
