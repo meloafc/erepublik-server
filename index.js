@@ -52,12 +52,15 @@ serverRef.push({
 
 var cors = require('cors');
 var express = require('express');
+var bodyParser = require('body-parser');
 var app = express();
 app.use(cors());
+app.use(bodyParser.json());
 app.set('port', process.env.PORT || 5000);
 
 require('./routes/server.routes.js')(app, db);
 require('./routes/player.routes.js')(app, db);
+require('./routes/team.routes.js')(app, db);
 
 app.listen(app.get('port'), function () {
   console.log('App is listening on port ' + app.get('port'));

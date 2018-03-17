@@ -5,6 +5,17 @@ module.exports = function (db) {
     const moment = require('moment');
     const player = require('./player.controller.js')(db);
 
+    const team = require('../models/team.js')(db);
+
+    module.criarTime = function (req, res) {
+        const time = req.body;
+        team.criarTime(time).then(timeCriado => {
+            res.send(timeCriado);
+        }).catch(error => {
+            res.send(error);
+        });
+    };
+
     module.contabilizarTimeAtivo = function () {
         return new Promise(function (resolve, reject) {
 
