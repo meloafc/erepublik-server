@@ -23,6 +23,19 @@ module.exports = function (db) {
         this.totalMedalsWon = totalMedalsWon;
     }
 
+    module.getHistorico = function (time) {
+        return new Promise(function (resolve, reject) {
+
+            const timeUrl = 'v2/team_history/' + time.id;
+            db.ref(timeUrl).once("value", function (snapshot) {
+                resolve(snapshot);
+            }, function(error) {
+                reject(error);
+            });
+            
+        });
+    };
+
     module.criarHistorico = function (time, listaJogadores) {
         return new Promise(function (resolve, reject) {
 

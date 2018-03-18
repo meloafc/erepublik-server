@@ -8,6 +8,20 @@ module.exports = function (db) {
     const team = require('../models/team.js')(db);
     const teamHistory = require('../models/teamHistory.js')(db);
 
+    module.getHistoricoTimeAtivo = function (req, res) {
+        team.getTimeAtivo().then(timeAtivo => {
+
+            teamHistory.getHistorico(timeAtivo).then(historicoTimeAtivo => {
+                res.send(historicoTimeAtivo);
+            }).catch(error => {
+                return res.send(error);
+            });
+
+        }).catch(error => {
+            return res.send(error);
+        });
+    };
+
     module.criarTime = function (req, res) {
         const time = req.body;
         team.criarTime(time).then(timeCriado => {
