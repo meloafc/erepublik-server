@@ -29,25 +29,38 @@ module.exports = function (db) {
     module.contabilizarTimeAtivo = function () {
         return new Promise(function (resolve, reject) {
 
-            module.getJogadoresDoTime('29ª Equipe').then(listaId => {
-                player.getEstadoAtualDosJogadores(listaId).then(listaJogadores => {
-                    // TODO: criar a view contando todas as medalhas.
-                    console.log(listaJogadores);
-                    resolve(listaJogadores);
+            module.getTimeAtivo().then(timeAtivo => {
+                if(!timeAtivo) {
+                    return reject('Sem time ativo!');
+                }
+                console.log(timeAtivo.name);
+                module.getJogadoresDoTime(timeAtivo.name).then(listaId => {
+                    console.log(listaId);
+                    player.getEstadoAtualDosJogadores(listaId).then(listaJogadores => {
+                        // TODO: criar a view contando todas as medalhas.
+                        console.log(listaJogadores);
+                        resolve(listaJogadores);
+                    }).catch(error => {
+                        reject(error);
+                    });
                 }).catch(error => {
                     reject(error);
                 });
             }).catch(error => {
                 reject(error);
             });
-
         });
     };
 
     module.getTimeAtivo = function () {
         return new Promise(function (resolve, reject) {
-            db.ref('teams').limitToLast(1).once("value", function (snapshot) {
-                resolve(snapshot.val());
+            db.ref('v2/teams').orderByChild("active").equalTo(true).limitToLast(1).once("value", function (snapshot) {
+                
+                snapshot.forEach(function(childSnapshot) {
+                    resolve(childSnapshot.val());
+                });
+
+                resolve();
             }, function(error) {
                 reject(error);
             });
@@ -56,10 +69,10 @@ module.exports = function (db) {
 
     module.getJogadoresDoTime = function (teamName) {
         return new Promise(function (resolve, reject) {
-            db.ref("teams").orderByChild("name").equalTo(teamName).limitToLast(1).once("value", function (snapshotTeam) {
+            db.ref("v2/teams").orderByChild("name").equalTo(teamName).limitToLast(1).once("value", function (snapshotTeam) {
 
                 const teamKey = Object.keys(snapshotTeam.val())[0];
-                const teamPlayersPath = 'team_players/' + teamKey;
+                const teamPlayersPath = 'v2/team_players/' + teamKey;
     
                 db.ref(teamPlayersPath).once("value", function (snapshotTeamPlayers) {
 

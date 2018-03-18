@@ -22,27 +22,32 @@ module.exports = function (db) {
             const id = fields[fields.length - 1];
 
             var contador = 0;
+            if($('img.citizen_avatar').length > 0) {
 
-            $('img.citizen_avatar').each(function (i, element) {
-                const name = $(this).attr('alt');
+                $('img.citizen_avatar').each(function (i, element, array) {
+                    const name = $(this).attr('alt');
 
-                $('#achievment').find('li').each(function (i, element, array) {
-                    let medal = $(this).children('img').attr('alt');
-                    if (medal === 'resistance hero') {
-                        let resistanceHero = $(this).children('.counter').text();
-                        if (!resistanceHero) {
-                            resistanceHero = 0;
+                    $('#achievment').find('li').each(function (i, element, array) {
+                        let medal = $(this).children('img').attr('alt');
+                        if (medal === 'resistance hero') {
+                            let resistanceHero = $(this).children('.counter').text();
+                            if (!resistanceHero) {
+                                resistanceHero = 0;
+                            }
+
+                            resolve(new Player(id, name, resistanceHero));
+
+                            contador++;
+                            if (contador === array.length) {
+                                reject();
+                            }
                         }
-
-                        resolve(new Player(id, name, resistanceHero));
-
-                        contador++;
-                        if (contador === array.length) {
-                            reject();
-                        }
-                    }
+                    });
                 });
-            });
+
+            } else {
+                reject(id);
+            }
         });
     };
 
@@ -99,7 +104,7 @@ module.exports = function (db) {
                                 done();
                             });
                         }).catch(error => {
-                            console.log(error);
+                            console.log('error ao extrairJogadorDoHTML id:' + error);
                             done();
                         });
                     }
@@ -120,7 +125,7 @@ module.exports = function (db) {
     module.salvarJogador = function (player) {
         return new Promise(function (resolve, reject) {
 
-            let newRef =  db.ref('player_history/' + player.id).push();
+            let newRef =  db.ref('v2/player_history/' + player.id).push();
             newRef.set({
                 name: player.name,
                 resistanceHero: player.resistanceHero,
