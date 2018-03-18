@@ -133,7 +133,7 @@ module.exports = function (db) {
             }).then(value => {
                 newRef.once("value", function (snapshot) {
                     resolve(new Player(
-                        snapshot.key,
+                        player.id,
                         snapshot.val().name,
                         snapshot.val().resistanceHero,
                         snapshot.val().lastUpdate

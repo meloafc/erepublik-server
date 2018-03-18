@@ -38,6 +38,27 @@ module.exports = function (db) {
         });
     };
 
+    module.getTimeAtivo = function () {
+        return new Promise(function (resolve, reject) {
+            db.ref('v2/teams').orderByChild("active").equalTo(true).limitToLast(1).once("value", function (snapshot) {
+                
+                snapshot.forEach(function(childSnapshot) {
+                    resolve(new Team(
+                        childSnapshot.key,
+                        childSnapshot.val().name,
+                        childSnapshot.val().createTime,
+                        childSnapshot.val().startTime,
+                        childSnapshot.val().endTime
+                    ));
+                });
+
+                resolve();
+            }, function(error) {
+                reject(error);
+            });
+        });
+    };
+
     module.salvarJogadores = function (timeId, listaJogadores) {
         return new Promise(function (resolve, reject) {
 

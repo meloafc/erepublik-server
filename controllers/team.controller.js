@@ -6,6 +6,7 @@ module.exports = function (db) {
     const player = require('./player.controller.js')(db);
 
     const team = require('../models/team.js')(db);
+    const teamHistory = require('../models/teamHistory.js')(db);
 
     module.criarTime = function (req, res) {
         const time = req.body;
@@ -29,16 +30,16 @@ module.exports = function (db) {
     module.contabilizarTimeAtivo = function () {
         return new Promise(function (resolve, reject) {
 
-            module.getTimeAtivo().then(timeAtivo => {
+            team.getTimeAtivo().then(timeAtivo => {
                 if(!timeAtivo) {
                     return reject('Sem time ativo!');
                 }
-                console.log(timeAtivo.name);
                 module.getJogadoresDoTime(timeAtivo.name).then(listaId => {
-                    console.log(listaId);
                     player.getEstadoAtualDosJogadores(listaId).then(listaJogadores => {
+
                         // TODO: criar a view contando todas as medalhas.
-                        console.log(listaJogadores);
+                        module.criarOuAtualizarHistorico(timeAtivo, listaJogadores);
+
                         resolve(listaJogadores);
                     }).catch(error => {
                         reject(error);
@@ -47,21 +48,6 @@ module.exports = function (db) {
                     reject(error);
                 });
             }).catch(error => {
-                reject(error);
-            });
-        });
-    };
-
-    module.getTimeAtivo = function () {
-        return new Promise(function (resolve, reject) {
-            db.ref('v2/teams').orderByChild("active").equalTo(true).limitToLast(1).once("value", function (snapshot) {
-                
-                snapshot.forEach(function(childSnapshot) {
-                    resolve(childSnapshot.val());
-                });
-
-                resolve();
-            }, function(error) {
                 reject(error);
             });
         });
@@ -91,6 +77,29 @@ module.exports = function (db) {
             });
         });
     };
+
+    module.criarOuAtualizarHistorico = function (time, listaJogadores) {
+        return new Promise(function (resolve, reject) {
+
+            const timeUrl = 'v2/team_history/' + time.id;
+            db.ref(timeUrl).once("value", function (snapshot) {
+
+                if (snapshot.exists()) {
+                    console.log('existe');
+                    teamHistory.atualizarHistorico(time, listaJogadores);
+                } else {                    
+                    console.log('não existe');
+                    teamHistory.criarHistorico(time, listaJogadores);
+                }
+                
+
+                resolve(snapshot);
+            }, function(error) {
+                reject(error);
+            });
+        });
+    };
+    
 
     return module;
 }
