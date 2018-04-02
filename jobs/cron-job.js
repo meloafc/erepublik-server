@@ -24,5 +24,5 @@ module.exports = function (db) {
     team.contabilizarTimeAtivo();
   }, null, true, tempo.ZONE_MANAUS);
 
-  team.contabilizarTimeAtivo();
+  // team.contabilizarTimeAtivo();
 }
