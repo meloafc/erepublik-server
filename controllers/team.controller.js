@@ -48,13 +48,22 @@ module.exports = function (db) {
                 if(!timeAtivo) {
                     return reject('Sem time ativo!');
                 }
-                module.getJogadoresDoTime(timeAtivo.name).then(listaId => {
-                    player.getEstadoAtualDosJogadores(listaId).then(listaJogadores => {
 
-                        // TODO: criar a view contando todas as medalhas.
-                        module.criarOuAtualizarHistorico(timeAtivo, listaJogadores);
-
-                        resolve(listaJogadores);
+                module.getHoraDoBanco().then(horaDoBanco => {
+                    if (timeAtivo.endTime) {
+                        console.log('timeAtivo.endTime:' + timeAtivo.endTime);
+                        console.log('horaDoBanco:' + horaDoBanco);
+                        if (timeAtivo.endTime < horaDoBanco) {
+                            return reject('Time chegou ao fim!');
+                        }
+                    }
+                    module.getJogadoresDoTime(timeAtivo.name).then(listaId => {
+                        player.getEstadoAtualDosJogadores(listaId).then(listaJogadores => {
+                            module.criarOuAtualizarHistorico(timeAtivo, listaJogadores);
+                            resolve(listaJogadores);
+                        }).catch(error => {
+                            reject(error);
+                        });
                     }).catch(error => {
                         reject(error);
                     });
@@ -62,6 +71,18 @@ module.exports = function (db) {
                     reject(error);
                 });
             }).catch(error => {
+                reject(error);
+            });
+        });
+    };
+
+    module.getHoraDoBanco = function () {
+        return new Promise(function (resolve, reject) {
+            db.ref("/.info/serverTimeOffset").on('value', function(offset) {
+                var offsetVal = offset.val() || 0;
+                var serverTime = Date.now() + offsetVal;
+                resolve(serverTime);
+            }, function(error) {
                 reject(error);
             });
         });
