@@ -4,5 +4,6 @@ module.exports = function(app, db) {
 
     app.get('/teamHistory', team.getHistoricoTimeAtivo);
     app.post('/team', team.criarTime);
+    app.get('/team/list', team.getListaTimes);
     app.post('/team/players', team.salvarJogadores);
 }

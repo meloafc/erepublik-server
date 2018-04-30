@@ -38,6 +38,29 @@ module.exports = function (db) {
         });
     };
 
+    module.getListaTimes = function () {
+        return new Promise(function (resolve, reject) {
+            db.ref('v2/teams').once("value", function (snapshot) {
+                
+                const times = []
+
+                snapshot.forEach(function(childSnapshot) {
+                    times.push(new Team(
+                        childSnapshot.key,
+                        childSnapshot.val().name,
+                        childSnapshot.val().createTime,
+                        childSnapshot.val().startTime,
+                        childSnapshot.val().endTime
+                    ));
+                });
+
+                resolve(times);
+            }, function(error) {
+                reject(error);
+            });
+        });
+    };
+
     module.getTimeAtivo = function () {
         return new Promise(function (resolve, reject) {
             db.ref('v2/teams').orderByChild("active").equalTo(true).limitToLast(1).once("value", function (snapshot) {

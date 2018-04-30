@@ -31,6 +31,14 @@ module.exports = function (db) {
         });
     };
 
+    module.getListaTimes = function (req, res) {
+        team.getListaTimes().then(times => {
+            res.send(times);
+        }).catch(error => {
+            res.send(error);
+        });
+    };
+
     module.salvarJogadores = function (req, res) {
         const timeId = req.body.timeId;
         const listaJogadores = req.body.listaJogadores;
