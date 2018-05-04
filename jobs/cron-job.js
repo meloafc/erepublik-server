@@ -2,6 +2,7 @@ module.exports = function (db) {
 
   const job = require('../models/job.js')();
   const tempo = require('../utils/tempo.js')();
+  const token = require('../utils/token.js')();
   const CronJob = require('cron').CronJob;
   const http = require("http");
 
@@ -25,4 +26,6 @@ module.exports = function (db) {
   }, null, true, tempo.ZONE_MANAUS);
 
   team.contabilizarTimeAtivo();
+
+  console.log(token.gerarToken());
 }
